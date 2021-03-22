@@ -98,6 +98,7 @@ export default function SimpleMap() {
   const [locations, setLocations] = useState([]);
   const [visEl, setVisEl] = useState({});
   const [mapType, setMapType] = useState('roadmap');
+  const [settings, setSettings] = useState({ center: initialCenter, zoom: 11 });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -112,6 +113,13 @@ export default function SimpleMap() {
   }, [locations]);
 
   useEffect(() => {
+    const mapel = document.getElementById('interactive_map');
+    const { initZoom, initCoo } = mapel.dataset;
+    const center = initCoo.split(',');
+    setSettings({
+      zoom: Number(initZoom),
+      center: { lat: Number(center[0]), lng: Number(center[1]) },
+    });
     const intervalId = setInterval(() => {
       setLocations((s) => {
         if (s.length > 0) {
@@ -135,13 +143,17 @@ export default function SimpleMap() {
       setLocations((s) => [...s, p]);
     };
     const handleResult = (result) => {
-      const { location } = result[0].geometry;
-      const processedProperty = {
-        ...property,
-        lat: location.lat(),
-        lng: location.lng(),
-      };
-      addProperty(processedProperty);
+      if (result[0]) {
+        const { location } = result[0].geometry;
+        const processedProperty = {
+          ...property,
+          lat: location.lat(),
+          lng: location.lng(),
+        };
+        addProperty(processedProperty);
+      } else {
+        console.log(result);
+      }
     };
     geocoder.geocode({ address: property.address }, handleResult);
   };
@@ -177,9 +189,9 @@ export default function SimpleMap() {
           language: 'es',
           region: 'us',
         }}
-        defaultCenter={initialCenter}
-        center={visEl.id ? { lat: visEl.lat, lng: visEl.lng } : initialCenter}
-        defaultZoom={11}
+        defaultCenter={settings.center}
+        center={visEl.id ? { lat: visEl.lat, lng: visEl.lng } : settings.center}
+        defaultZoom={settings.zoom}
         options={createMapOptions}
         yesIWantToUseGoogleMapApiInternals
         onGoogleApiLoaded={initGeocoder}
