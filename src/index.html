@@ -5,14 +5,22 @@
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    
     <div class='container'  >
-      <div id='properties_container'>
-        <div  id='property1' data-address='2701 S Bayshore Dr Miami, FL 33133' data-text="Property 1"  ><h1>Property 1</h1></div>
-        <div  id='property2' data-address='1642 NW 3rd St Miami, FL 33125' data-text="Property 2"  ><h1>Property 2</h1></div>
+      <div id="properties_container" class="articles">
+        <article id="property-1" data-coo="-12.1008799,-77.0280677" data-text="Home" >
+          <h1>Home</h1>
+        </article>
       </div>
       <div id="interactive_map" data-init-coo="-12.100867,-77.034787" data-init-zoom="17"></div>
     </div>
     <style>
+
+      article{
+        height: 70vh ;
+        overflow: hidden;
+        margin: 50px 0;
+      }
       #properties_container{
         width: 50%;
       }

@@ -101,76 +101,116 @@ export default function SimpleMap() {
   const [settings, setSettings] = useState({ center: initialCenter, zoom: 11 });
 
   useEffect(() => {
-    const handleScroll = () => {
-      locations.forEach((l) => {
-        const el = window.document.getElementById(l.id);
-        if (isElementInViewport(el)) {
-          setVisEl(l);
-        }
-      });
-    };
-    window.addEventListener('scroll', handleScroll);
+    // const handleScroll = () => {
+    //   locations.forEach((l) => {
+    //     const el = window.document.getElementById(l.id);
+    //     if (isElementInViewport(el)) {
+    //       setVisEl(l);
+    //     }
+    //   });
+    // };
+    // window.addEventListener('scroll', handleScroll);
+
+    if (locations.length > 0) {
+      const options = {
+        rootMargin: '150px',
+        threshold: 1,
+      };
+
+      const callback = (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const el = locations.filter((l) => l.id === entry.target.id)[0];
+            setVisEl(el);
+          }
+        });
+      };
+
+      const observer = new IntersectionObserver(callback, options);
+      locations.forEach((l) => observer.observe(document.getElementById(l.id)));
+    }
   }, [locations]);
 
   useEffect(() => {
     const mapel = document.getElementById('interactive_map');
     const { initZoom, initCoo } = mapel.dataset;
     const center = initCoo.split(',');
+
+    const properties = window.document.getElementById('properties_container')
+      .children;
+    const locs = Object.keys(properties).map((p) => {
+      const { id } = properties[p];
+      const { text, coo } = properties[p].dataset;
+      let [lat, lng] = coo.split(',');
+      return {
+        id,
+        text,
+        lng: Number(lng),
+        lat: Number(lat),
+      };
+    });
+
+    setLocations(locs);
+    setVisEl(locs[0]);
+
     setSettings({
       zoom: Number(initZoom),
       center: { lat: Number(center[0]), lng: Number(center[1]) },
     });
-    const intervalId = setInterval(() => {
-      setLocations((s) => {
-        if (s.length > 0) {
-          const elements = window.document.getElementById(
-            'properties_container'
-          ).children;
-          const first = s.filter((el) => el.id === elements[0].id);
-          setVisEl(first[0]);
-          clearInterval(intervalId);
-        }
-        return s;
-      });
-    }, 500);
-    setTimeout(() => {
-      clearInterval(intervalId);
-    }, 10000);
+
+    // In case of address conversion
+
+    // const intervalId = setInterval(() => {
+    //   setLocations((s) => {
+    //     if (s.length > 0) {
+    //       const elements = window.document.getElementById(
+    //         'properties_container'
+    //       ).children;
+    //       const first = s.filter((el) => el.id === elements[0].id);
+    //       setVisEl(first[0]);
+    //       clearInterval(intervalId);
+    //     }
+    //     return s;
+    //   });
+    // }, 500);
+    // setTimeout(() => {
+    //   clearInterval(intervalId);
+    // }, 10000);
   }, []);
 
-  const convertAddressToLocation = (property, geocoder) => {
-    const addProperty = (p) => {
-      setLocations((s) => [...s, p]);
-    };
-    const handleResult = (result) => {
-      if (result[0]) {
-        const { location } = result[0].geometry;
-        const processedProperty = {
-          ...property,
-          lat: location.lat(),
-          lng: location.lng(),
-        };
-        addProperty(processedProperty);
-      } else {
-        console.log(result);
-      }
-    };
-    geocoder.geocode({ address: property.address }, handleResult);
-  };
+  // const convertAddressToLocation = (property, geocoder) => {
+  //   const addProperty = (p) => {
+  //     setLocations((s) => [...s, p]);
+  //   };
+  //   const handleResult = (result) => {
+  //     if (result[0] !== null && result[0]) {
+  //       const { location } = result[0].geometry;
+  //       const processedProperty = {
+  //         ...property,
+  //         lat: location.lat(),
+  //         lng: location.lng(),
+  //       };
+  //       addProperty(processedProperty);
+  //     } else {
+  //       console.log(result);
+  //     }
+  //   };
+  //   geocoder.geocode({ address: property.address }, handleResult);
+  // };
 
   const initGeocoder = ({ maps, map }) => {
     maps.event.addListener(map, 'maptypeid_changed', () =>
       setMapType(map.getMapTypeId())
     );
 
-    const Geocoder = new maps.Geocoder();
-    const elements = window.document.getElementById('properties_container')
-      .children;
-    Object.keys(elements).forEach((el) => {
-      const { id } = elements[el];
-      const { address, text } = elements[el].dataset;
-      convertAddressToLocation({ address, text, id }, Geocoder);
-    });
+    // const Geocoder = new maps.Geocoder();
+    // const elements = window.document.getElementById('properties_container')
+    //   .children;
+    // Object.keys(elements).forEach((el) => {
+    //   const { id } = elements[el];
+    //   const { address, text } = elements[el].dataset;
+    //   convertAddressToLocation({ address, text, id }, Geocoder);
+    // });
   };
 
   return (
@@ -193,8 +233,8 @@ export default function SimpleMap() {
         center={visEl.id ? { lat: visEl.lat, lng: visEl.lng } : settings.center}
         defaultZoom={settings.zoom}
         options={createMapOptions}
-        yesIWantToUseGoogleMapApiInternals
         onGoogleApiLoaded={initGeocoder}
+        yesIWantToUseGoogleMapApiInternals
       >
         {locations.map((loc) => (
           <Pin
